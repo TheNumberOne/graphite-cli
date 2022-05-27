@@ -4,7 +4,6 @@ import { TContext } from '../../lib/context';
 import { KilledError } from '../../lib/errors';
 import { TScopeSpec } from '../../lib/state/scope_spec';
 import { syncPRInfoForBranches } from '../../lib/sync/pr_info';
-import { logError, logNewline, logWarn } from '../../lib/utils/splog';
 
 export async function getValidBranchesToSubmit(
   scope: TScopeSpec,
@@ -19,7 +18,7 @@ export async function getValidBranchesToSubmit(
   const branchNames = context.metaCache
     .getCurrentStack(scope)
     .filter((b) => !context.metaCache.isTrunk(b));
-  logNewline();
+  context.splog.logNewline();
 
   await syncPRInfoForBranches(branchNames, context);
 
@@ -49,8 +48,8 @@ function hasAnyMergedBranches(
       hasMultipleBranches ? 'es have' : ' has'
     } already been merged:`
   );
-  mergedBranches.forEach((b) => logError(`▸ ${chalk.reset(b)}`));
-  logError(
+  mergedBranches.forEach((b) => context.splog.logError(`▸ ${chalk.reset(b)}`));
+  context.splog.logError(
     `If this is expected, you can use 'gt repo sync' to delete ${
       hasMultipleBranches ? 'these branches' : 'this branch'
     } locally and restack dependencies.`
@@ -77,8 +76,8 @@ function hasAnyClosedBranches(
       hasMultipleBranches ? 'es have' : ' has'
     } been closed:`
   );
-  closedBranches.forEach((b) => logError(`▸ ${chalk.reset(b)}`));
-  logError(
+  closedBranches.forEach((b) => context.splog.logError(`▸ ${chalk.reset(b)}`));
+  context.splog.logError(
     `To submit ${
       hasMultipleBranches ? 'these branches' : 'this branch'
     }, please reopen the PR remotely.`
@@ -91,7 +90,7 @@ function needsRestacking(branchNames: string[], context: TContext): boolean {
   if (branchNames.every(context.metaCache.isBranchFixed)) {
     return false;
   }
-  logWarn(
+  context.splog.logWarn(
     [
       `You are trying to submit at least one branch that has not been restacked.`,
       `Run the corresponding restack command and try again.`,
@@ -116,14 +115,14 @@ export async function shouldNotSubmitDueToEmptyBranches(
       hasMultipleBranches ? 'es have' : ' has'
     } no changes:`
   );
-  emptyBranches.forEach((b) => logWarn(`▸ ${chalk.reset(b)}`));
+  emptyBranches.forEach((b) => context.splog.logWarn(`▸ ${chalk.reset(b)}`));
   if (!context.interactive) {
-    logWarn(
+    context.splog.logWarn(
       `Aborting non-interactive submit.  This warning can be bypassed in interactive mode.`
     );
     return true;
   }
-  logWarn(
+  context.splog.logWarn(
     `Are you sure you want to submit ${hasMultipleBranches ? 'them' : 'it'}?`
   );
   context.splog.logNewline();
