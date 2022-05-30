@@ -1,9 +1,9 @@
 import { TContext } from '../../lib/context';
 import { uncommittedTrackedChangesPrecondition } from '../../lib/preconditions';
-import { syncPrInfo } from '../../lib/sync/pr_info';
 import { cleanBranches as cleanBranches } from '../clean_branches';
 import { mergeDownstack } from './merge_downstack';
 import { pull } from './pull';
+import { syncPrInfo } from './sync_pr_info';
 export async function syncAction(
   opts: {
     pull: boolean;
