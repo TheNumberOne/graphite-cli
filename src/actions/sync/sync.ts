@@ -1,6 +1,6 @@
 import { TContext } from '../../lib/context';
 import { uncommittedTrackedChangesPrecondition } from '../../lib/preconditions';
-import { syncPRInfoForBranches } from '../../lib/sync/pr_info';
+import { syncPrInfo } from '../../lib/sync/pr_info';
 import { cleanBranches as cleanBranches } from '../clean_branches';
 import { mergeDownstack } from './merge_downstack';
 import { pull } from './pull';
@@ -28,7 +28,7 @@ export async function syncAction(
     await mergeDownstack(opts.downstackToSync, context);
   }
 
-  await syncPRInfoForBranches(context.metaCache.allBranchNames, context);
+  await syncPrInfo(context.metaCache.allBranchNames, context);
 
   if (opts.delete) {
     await cleanBranches(
