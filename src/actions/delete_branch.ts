@@ -31,6 +31,11 @@ export function deleteBranchAction(
   }
 }
 
+// Where did we merge this? If it was merged on GitHub, we see where it was
+// merged into. If we don't detect that it was merged in GitHub but we do
+// see the code in trunk, we fallback to say that it was merged into trunk.
+// This extra check (rather than just saying trunk) is used to catch the
+// case where one feature branch is merged into another on GitHub.
 export function isSafeToDelete(
   branchName: string,
   context: TContext
@@ -39,18 +44,13 @@ export function isSafeToDelete(
   const prState = prInfo?.state;
   const prBase = prInfo?.base;
 
-  // Where did we merge this? If it was merged on GitHub, we see where it was
-  // merged into. If we don't detect that it was merged in GitHub but we do
-  // see the code in trunk, we fallback to say that it was merged into trunk.
-  // This extra check (rather than just saying trunk) is used to catch the
-  // case where one feature branch is merged into another on GitHub.
   return prState === 'CLOSED'
     ? `${chalk.red(branchName)} is closed on GitHub`
     : prState === 'MERGED'
     ? `${chalk.green(branchName)} is merged into ${chalk.cyan(
         prBase ?? context.metaCache.trunk
       )}`
-    : context.metaCache.isMerged(branchName)
+    : context.metaCache.isMergedIntoTrunk(branchName)
     ? `${chalk.green(branchName)} is merged into ${chalk.cyan(
         context.metaCache.trunk
       )}`

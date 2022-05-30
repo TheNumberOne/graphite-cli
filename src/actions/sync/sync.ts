@@ -1,18 +1,10 @@
-import { TRepoSyncStackFrame } from '../../lib/config/merge_conflict_callstack_config';
 import { TContext } from '../../lib/context';
-import { branchExists } from '../../lib/git/branch_exists';
-import { switchBranch } from '../../lib/git/switch_branch';
-import {
-  currentBranchPrecondition,
-  uncommittedTrackedChangesPrecondition,
-} from '../../lib/preconditions';
+import { uncommittedTrackedChangesPrecondition } from '../../lib/preconditions';
 import { syncPRInfoForBranches } from '../../lib/sync/pr_info';
-import { getTrunk } from '../../lib/utils/trunk';
 import { Branch } from '../../wrapper-classes/branch';
 import { cleanBranches as cleanBranches } from '../clean_branches';
 import { mergeDownstack } from './merge_downstack';
 import { pull } from './pull';
-import { resubmitBranchesWithNewBases } from './resubmit_branches_with_new_bases';
 export async function syncAction(
   opts: {
     pull: boolean;
@@ -25,8 +17,10 @@ export async function syncAction(
   context: TContext
 ): Promise<void> {
   uncommittedTrackedChangesPrecondition();
-  const oldBranchName = currentBranchPrecondition().name;
-  switchBranch(getTrunk(context).name);
+  const oldBranchName = context.metaCache.currentBranchPrecondition;
+  if (!oldBranchName || context.metaCache.isTrunk(oldBranchName)) {
+    context.metaCache.checkoutBranch(context.metaCache.trunk);
+  }
 
   if (opts.pull) {
     pull(
@@ -49,42 +43,10 @@ export async function syncAction(
     context
   );
 
-  const deleteMergedBranchesContinuation = {
-    op: 'REPO_SYNC_CONTINUATION' as const,
-    force: opts.force,
-    resubmit: opts.resubmit,
-    oldBranchName: oldBranchName,
-  };
-
   if (opts.delete) {
     await cleanBranches(
-      {
-        frame: {
-          op: 'DELETE_BRANCHES_CONTINUATION',
-          force: opts.force,
-          showDeleteProgress: opts.showDeleteProgress,
-        },
-        parent: [deleteMergedBranchesContinuation],
-        showSyncTip: true,
-      },
+      { showDeleteProgress: opts.showDeleteProgress, force: opts.force },
       context
     );
   }
-
-  await cleanBranchesContinuation(deleteMergedBranchesContinuation, context);
-}
-
-export async function cleanBranchesContinuation(
-  frame: TRepoSyncStackFrame,
-  context: TContext
-): Promise<void> {
-  if (frame.resubmit) {
-    await resubmitBranchesWithNewBases(frame.force, context);
-  }
-
-  switchBranch(
-    branchExists(frame.oldBranchName)
-      ? frame.oldBranchName
-      : getTrunk(context).name
-  );
 }
