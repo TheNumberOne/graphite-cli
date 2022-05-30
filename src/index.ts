@@ -37,6 +37,4 @@ yargs(process.argv.slice(2))
   .options(globalArgumentsOptions)
   .global(Object.keys(globalArgumentsOptions))
   .strict()
-  .options(globalArgumentsOptions)
-  .global(Object.keys(globalArgumentsOptions))
   .demandCommand().argv;
