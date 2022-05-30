@@ -1,6 +1,3 @@
-import fs from 'fs-extra';
-import path from 'path';
-import { getRepoRootPathPrecondition } from '../preconditions';
 import { cuteString } from '../utils/cute_string';
 import { gpExecSync } from '../utils/exec_sync';
 
@@ -64,20 +61,13 @@ export function readMetadataRef(
 }
 
 export function deleteMetadataRef(branchName: string): void {
-  fs.removeSync(getMetadataPath(branchName));
-}
-
-function getMetadataPath(branchName: string): string {
-  return path.join(branchMetadataDirPath(), branchName);
-}
-
-function branchMetadataDirPath(): string {
-  return path.join(getRepoRootPathPrecondition(), `refs/branch-metadata/`);
+  gpExecSync({
+    command: ` git update-ref -d refs/branch-metadata/${branchName}`,
+  });
 }
 
 export function allBranchesWithMeta(): string[] {
-  if (!fs.existsSync(branchMetadataDirPath())) {
-    return [];
-  }
-  return fs.readdirSync(branchMetadataDirPath());
+  return gpExecSync({
+    command: `git for-each-ref --format='%(refname:lstrip=2)' refs/branch-metadata/`,
+  }).split('\n');
 }
